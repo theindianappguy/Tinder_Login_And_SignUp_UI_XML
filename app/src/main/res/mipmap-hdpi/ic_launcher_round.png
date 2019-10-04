@@ -1,0 +1,142 @@
+// Copyright (c) 2013, the Dart project authors.  Please see the AUTHORS file
+// for details. All rights reserved. Use of this source code is governed by a
+// BSD-style license that can be found in the LICENSE file.
+
+part of dart.convert;
+
+/// An instance of the default implementation of the [AsciiCodec].
+///
+/// This instance provides a convenient access to the most common ASCII
+/// use cases.
+///
+/// Examples:
+/// ```dart
+/// var encoded = ascii.encode("This is ASCII!");
+/// var decoded = ascii.decode([0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73,
+///                             0x20, 0x41, 0x53, 0x43, 0x49, 0x49, 0x21]);
+/// ```
+const AsciiCodec ascii = AsciiCodec();
+
+const int _asciiMask = 0x7F;
+
+/// An [AsciiCodec] allows encoding strings as ASCII bytes
+/// and decoding ASCII bytes to strings.
+class AsciiCodec extends Encoding {
+  final bool _allowInvalid;
+
+  /// Instantiates a new [AsciiCodec].
+  ///
+  /// If [allowInvalid] is true, the [decode] method and the converter
+  /// returned by [decoder] will default to allowing invalid values.
+  /// If allowing invalid values, the values will be decoded into the Unicode
+  /// Replacement character (U+FFFD). If not, an exception will be thrown.
+  /// Calls to the [decode] method can choose to override this default.
+  ///
+  /// Encoders will not accept invalid (non ASCII) characters.
+  const AsciiCodec({bool allowInvalid = false}) : _allowInvalid = allowInvalid;
+
+  /// The name of this codec, "us-ascii".
+  String get name => "us-ascii";
+
+  Uint8List encode(String source) => encoder.convert(source);
+
+  /// Decodes the ASCII [bytes] (a list of unsigned 7-bit integers) to the
+  /// corresponding string.
+  ///
+  /// If [bytes] contains values that are not in the range 0 .. 127, the decoder
+  /// will eventually throw a [FormatException].
+  ///
+  /// If [allowInvalid] is not provided, it defaults to the value used to create
+  /// this [AsciiCodec].
+  String decode(List<int> bytes, {bool allowInvalid}) {
+    allowInvalid ??= _allowInvalid;
+    if (allowInvalid) {
+      return const AsciiDecoder(allowInvalid: true).convert(bytes);
+    } else {
+      return const AsciiDecoder(allowInvalid: false).convert(bytes);
+    }
+  }
+
+  AsciiEncoder get encoder => const AsciiEncoder();
+
+  AsciiDecoder get decoder => _allowInvalid
+      ? const AsciiDecoder(allowInvalid: true)
+      : const AsciiDecoder(allowInvalid: false);
+}
+
+// Superclass for [AsciiEncoder] and [Latin1Encoder].
+// Generalizes common operations that only differ by a mask;
+class _UnicodeSubsetEncoder extends Converter<String, List<int>> {
+  final int _subsetMask;
+
+  const _UnicodeSubsetEncoder(this._subsetMask);
+
+  /// Converts the [String] into a list of its code units.
+  ///
+  /// If [start] and [end] are provided, only the substring
+  /// `string.substring(start, end)` is used as input to the conversion.
+  Uint8List convert(String string, [int start = 0, int end]) {
+    var stringLength = string.length;
+    end = RangeError.checkValidRange(start, end, stringLength);
+    var length = end - start;
+    var result = Uint8List(length);
+    for (var i = 0; i < length; i++) {
+      var codeUnit = string.codeUnitAt(start + i);
+      if ((codeUnit & ~_subsetMask) != 0) {
+        throw ArgumentError.value(
+            string, "string", "Contains invalid characters.");
+      }
+      result[i] = codeUnit;
+    }
+    return result;
+  }
+
+  /// Starts a chunked conversion.
+  ///
+  /// The converter works more efficiently if the given [sink] is a
+  /// [ByteConversionSink].
+  StringConversionSink startChunkedConversion(Sink<List<int>> sink) {
+    return _UnicodeSubsetEncoderSink(_subsetMask,
+        sink is ByteConversionSink ? sink : ByteConversionSink.from(sink));
+  }
+
+  // Override the base-class' bind, to provide a better type.
+  Stream<List<int>> bind(Stream<String> stream) => super.bind(stream);
+}
+
+/// This class converts strings of only ASCII characters to bytes.
+class AsciiEncoder extends _UnicodeSubsetEncoder {
+  const AsciiEncoder() : super(_asciiMask);
+}
+
+/// This class encodes chunked strings to bytes (unsigned 8-bit
+/// integers).
+class _UnicodeSubsetEncoderSink extends StringConversionSinkBase {
+  final ByteConversionSink _sink;
+  final int _subsetMask;
+
+  _UnicodeSubsetEncoderSink(this._subsetMask, this._sink);
+
+  void close() {
+    _sink.close();
+  }
+
+  void addSlice(String source, int start, int end, bool isLast) {
+    RangeError.checkValidRange(start, end, source.length);
+    for (var i = start; i < end; i++) {
+      var codeUnit = source.codeUnitAt(i);
+      if ((codeUnit & ~_subsetMask) != 0) {
+        throw ArgumentError(
+            "Source contains invalid character with code point: $codeUnit.");
+      }
+    }
+    _sink.add(source.codeUnits.sublist(start, end));
+    if (isLast) {
+      close();
+    }
+  }
+}
+
+/// This class converts Latin-1 bytes (lists of unsigned 8-bit integers)
+/// to a string.
+abstract class _Un

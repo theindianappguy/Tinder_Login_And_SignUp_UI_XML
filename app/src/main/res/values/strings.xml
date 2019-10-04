@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Tinder Login &amp; SignUp UI XML</string>
+    <string name="condition_desc">when you tap Continue, Tinder will send a text with verification code. Message and data rates may apply. The verified phone number can be used to log in.</string>
+    <string name="log_in_by_email">LOG IN BY EMAIL</string>
+</resources>

@@ -1,0 +1,79 @@
+// Copyright (c) 2013, the Dart project authors.  Please see the AUTHORS file
+// for details. All rights reserved. Use of this source code is governed by a
+// BSD-style license that can be found in the LICENSE file.
+
+part of dart.convert;
+
+/// Error thrown by JSON serialization if an object cannot be serialized.
+///
+/// The [unsupportedObject] field holds that object that failed to be serialized.
+///
+/// If an object isn't directly serializable, the serializer calls the `toJson`
+/// method on the object. If that call fails, the error will be stored in the
+/// [cause] field. If the call returns an object that isn't directly
+/// serializable, the [cause] is null.
+class JsonUnsupportedObjectError extends Error {
+  /// The object that could not be serialized.
+  final Object unsupportedObject;
+
+  /// The exception thrown when trying to convert the object.
+  final Object cause;
+
+  /// The partial result of the conversion, up until the error happened.
+  ///
+  /// May be null.
+  final String partialResult;
+
+  JsonUnsupportedObjectError(this.unsupportedObject,
+      {this.cause, this.partialResult});
+
+  String toString() {
+    var safeString = Error.safeToString(unsupportedObject);
+    String prefix;
+    if (cause != null) {
+      prefix = "Converting object to an encodable object failed:";
+    } else {
+      prefix = "Converting object did not return an encodable object:";
+    }
+    return "$prefix $safeString";
+  }
+}
+
+/// Reports that an object could not be stringified due to cyclic references.
+///
+/// An object that references itself cannot be serialized by
+/// [JsonCodec.encode]/[JsonEncoder.convert].
+/// When the cycle is detected, a [JsonCyclicError] is thrown.
+class JsonCyclicError extends JsonUnsupportedObjectError {
+  /// The first object that was detected as part of a cycle.
+  JsonCyclicError(Object object) : super(object);
+  String toString() => "Cyclic error in JSON stringify";
+}
+
+/// An instance of the default implementation of the [JsonCodec].
+///
+/// This instance provides a convenient access to the most common JSON
+/// use cases.
+///
+/// Examples:
+///
+///     var encoded = json.encode([1, 2, { "a": null }]);
+///     var decoded = json.decode('["foo", { "bar": 499 }]');
+///
+/// The top-level [jsonEncode] and [jsonDecode] functions may be used instead if
+/// a local variable shadows the [json] constant.
+const JsonCodec json = JsonCodec();
+
+/// Converts [value] to a JSON string.
+///
+/// If value contains objects that are not directly encodable to a JSON
+/// string (a value that is not a number, boolean, string, null, list or a map
+/// with string keys), the [toEncodable] function is used to convert it to an
+/// object that must be directly encodable.
+///
+/// If [toEncodable] is omitted, it defaults to a function that returns the
+/// result of calling `.toJson()` on the unencodable object.
+///
+/// Shorthand for [json.encode]. Useful if a local variable shadows the global
+/// [json] constant.
+String jsonEnco

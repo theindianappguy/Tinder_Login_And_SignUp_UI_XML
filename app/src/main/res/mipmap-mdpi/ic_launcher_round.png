@@ -1,0 +1,66 @@
+// Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
+// for details. All rights reserved. Use of this source code is governed by a
+// BSD-style license that can be found in the LICENSE file.
+
+part of dart.convert;
+
+/// A [base64](https://tools.ietf.org/html/rfc4648) encoder and decoder.
+///
+/// It encodes using the default base64 alphabet,
+/// decodes using both the base64 and base64url alphabets,
+/// does not allow invalid characters and requires padding.
+///
+/// Examples:
+///
+///     var encoded = base64.encode([0x62, 0x6c, 0xc3, 0xa5, 0x62, 0xc3, 0xa6,
+///                                  0x72, 0x67, 0x72, 0xc3, 0xb8, 0x64]);
+///     var decoded = base64.decode("YmzDpWLDpnJncsO4ZAo=");
+///
+/// The top-level [base64Encode] and [base64Decode] functions may be used
+/// instead if a local variable shadows the [base64] constant.
+const Base64Codec base64 = Base64Codec();
+
+/// A [base64url](https://tools.ietf.org/html/rfc4648) encoder and decoder.
+///
+/// It encodes and decodes using the base64url alphabet,
+/// decodes using both the base64 and base64url alphabets,
+/// does not allow invalid characters and requires padding.
+///
+/// Examples:
+///
+///     var encoded = base64Url.encode([0x62, 0x6c, 0xc3, 0xa5, 0x62, 0xc3, 0xa6,
+///                                     0x72, 0x67, 0x72, 0xc3, 0xb8, 0x64]);
+///     var decoded = base64Url.decode("YmzDpWLDpnJncsO4ZAo=");
+const Base64Codec base64Url = Base64Codec.urlSafe();
+
+/// Encodes [bytes] using [base64](https://tools.ietf.org/html/rfc4648) encoding.
+///
+/// Shorthand for [base64.encode]. Useful if a local variable shadows the global
+/// [base64] constant.
+String base64Encode(List<int> bytes) => base64.encode(bytes);
+
+/// Encodes [bytes] using [base64url](https://tools.ietf.org/html/rfc4648) encoding.
+///
+/// Shorthand for [base64url.encode].
+String base64UrlEncode(List<int> bytes) => base64Url.encode(bytes);
+
+/// Decodes [base64](https://tools.ietf.org/html/rfc4648) or [base64url](https://tools.ietf.org/html/rfc4648) encoded bytes.
+///
+/// Shorthand for [base64.decode]. Useful if a local variable shadows the
+/// global [base64] constant.
+Uint8List base64Decode(String source) => base64.decode(source);
+
+// Constants used in more than one class.
+const int _paddingChar = 0x3d; // '='.
+
+/// A [base64](https://tools.ietf.org/html/rfc4648) encoder and decoder.
+///
+/// A [Base64Codec] allows base64 encoding bytes into ASCII strings and
+/// decoding valid encodings back to bytes.
+///
+/// This implementation only handles the simplest RFC 4648 base64 and base64url
+/// encodings.
+/// It does not allow invalid characters when decoding and it requires,
+/// and generates, padding so that the input is always a multiple of four
+/// characters.
+class Base64Codec extends Codec<List<
