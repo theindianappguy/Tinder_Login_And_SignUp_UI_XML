@@ -1,8 +1,6 @@
-# 📱 Tinder Login and Sign UI XML ( Made by Sanskar Tiwari )
+# 📱 Tinder Login and Sign UI XML
 
-Design screens are on [Behance.](https://www.behance.net/gallery/76766923/Login-UI-Kit-Vol-1-Free-Download-XD) you can get XD file from there.
-
-Don't forget to star⭐ the repo if you like what you see😉.
+## Don't forget to star⭐ the repo if you like what you see😉.
 
 # 📸 Screenshots
 
